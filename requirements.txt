@@ -1,3 +1,6 @@
+about-time==4.2.1
+alive-progress==3.2.0
 ExifRead==3.0.0
 geographiclib==2.0
 geopy==2.4.1
+grapheme==0.6.0

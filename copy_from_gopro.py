@@ -7,6 +7,7 @@ import argparse
 import datetime
 import exifread
 import shutil
+from alive_progress import alive_bar
 
 def dir_path(string):
   if os.path.isdir(string):
@@ -18,6 +19,7 @@ parser = argparse.ArgumentParser(description="")
 parser.add_argument("-s", "--source", help="Source Direcory of GoPro images (recursive)", type=dir_path, required=True)
 parser.add_argument("-d", "--destination", help="Destination directory where the images will be copied", type=dir_path, required=True)
 parser.add_argument("-r", "--replace", help="Replace if file exists", action='store_true')
+parser.add_argument("-m", "--move", help="Move anstead of copy", action='store_true')
 
 args = parser.parse_args()
 
@@ -50,10 +52,23 @@ def get_datetime_exifread(filename):
 
 def print_stat():
   global count_skip, count_move, count_copy, count_create, count_replace, count_error
+
   print("Copy: " + str(count_copy) + " Move: " + str(count_move) + " Replace: " + str(count_replace) + " Skipped: " + str(count_skip) + " Created directories: " + str(count_create))
+
+def copy_or_move(src, dest):
+  global count_move, count_copy
+
+  if args.move:
+    shutil.move(src,dest)
+    count_move += 1
+  else:
+    shutil.copy(src,dest)
+    shutil.copystat(src,dest)
+    count_copy += 1
 
 def copy_from(current_dir):
   global count_skip, count_move, count_copy, count_create, count_replace, count_error
+
   for filedir in os.listdir(current_dir):
     full_filedir = os.path.join(current_dir, filedir)
 
@@ -73,18 +88,17 @@ def copy_from(current_dir):
         if not args.replace:
           count_skip += 1
         else:
-          shutil.copy(full_filedir,target_file)
-          shutil.copystat(full_filedir,target_file)
+          copy_or_move(full_filedir,target_file)
           count_replace += 1
       else:
-        shutil.copy(full_filedir,target_file)
-        shutil.copystat(full_filedir,target_file)
-        count_copy += 1
+        copy_or_move(full_filedir,target_file)
       # TODO copy file create
+      bar()
 
     elif os.path.isdir(full_filedir):
       # scan subdir
       copy_from(full_filedir)
 
-copy_from(source_directory)
+with alive_bar(0) as bar:
+  copy_from(source_directory)
 print_stat()
