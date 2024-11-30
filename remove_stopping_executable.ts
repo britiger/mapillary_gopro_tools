@@ -3,12 +3,11 @@
 const args = process.argv.slice(2);
 
 if (args.length !== 1) {
-  console.error("Usage: drag and drop a folder onto this script.");
+  console.error("Usage: Call with `./remove_stopping_executable.ts PATH/TO/YOUR/FILES`.");
   process.exit(1);
 }
 
 const folderPath = args[0];
-const dockerImage = "remove_stopping";
 
 // Function to check if the Docker image exists
 async function imageExists(image: string): Promise<boolean> {
@@ -32,9 +31,9 @@ async function buildImageIfNeeded(image: string): Promise<void> {
 }
 
 async function run() {
-  await buildImageIfNeeded(dockerImage);
+  await buildImageIfNeeded("remove_stopping_image");
 
-  const dockerCommand = `docker run -v "${folderPath}:/data" ${dockerImage} python ./remove_stopping.py -p /data -d 3`;
+  const dockerCommand = `docker run --rm -v "${folderPath}:/data" remove_stopping_image python ./remove_stopping.py -p /data -d 3`;
   const runProcess = Bun.spawn(["sh", "-c", dockerCommand], {
     stdout: "inherit",
     stderr: "inherit",
